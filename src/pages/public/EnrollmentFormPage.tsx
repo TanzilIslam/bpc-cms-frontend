@@ -12,20 +12,20 @@ import { Textarea } from "@/components/ui/textarea"
 
 const enrollmentSchema = z
   .object({
-    full_name: z.string().min(3, "Enter your full name."),
+    fullName: z.string().min(3, "Enter your full name."),
     email: z.string().email("Enter a valid email."),
     phone: z.string().min(11, "Enter a valid phone number."),
-    interested_course: z.string().min(2, "Enter course name."),
-    has_laptop: z.boolean(),
-    laptop_specs: z.string().optional(),
-    has_internet: z.boolean(),
-    why_join: z.string().min(20, "Write at least 20 characters."),
+    interestedCourse: z.string().min(2, "Enter course name."),
+    hasLaptop: z.boolean(),
+    laptopSpecs: z.string().optional(),
+    hasInternet: z.boolean(),
+    whyJoin: z.string().min(20, "Write at least 20 characters."),
   })
   .superRefine((value, context) => {
-    if (value.has_laptop && (!value.laptop_specs || value.laptop_specs.trim().length === 0)) {
+    if (value.hasLaptop && (!value.laptopSpecs || value.laptopSpecs.trim().length === 0)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["laptop_specs"],
+        path: ["laptopSpecs"],
         message: "Laptop specs are required when you have a laptop.",
       })
     }
@@ -50,25 +50,25 @@ export function EnrollmentFormPage() {
   } = useForm<EnrollmentFormData>({
     resolver: zodResolver(enrollmentSchema),
     defaultValues: {
-      full_name: "",
+      fullName: "",
       email: "",
       phone: "",
-      interested_course: "",
-      has_laptop: false,
-      laptop_specs: "",
-      has_internet: true,
-      why_join: "",
+      interestedCourse: "",
+      hasLaptop: false,
+      laptopSpecs: "",
+      hasInternet: true,
+      whyJoin: "",
     },
   })
 
   useEffect(() => {
     if (courseParam) {
-      setValue("interested_course", courseParam)
+      setValue("interestedCourse", courseParam)
     }
   }, [courseParam, setValue])
 
-  const hasLaptop = useWatch({ control, name: "has_laptop" })
-  const hasInternet = useWatch({ control, name: "has_internet" })
+  const hasLaptop = useWatch({ control, name: "hasLaptop" })
+  const hasInternet = useWatch({ control, name: "hasInternet" })
 
   async function onSubmit(values: EnrollmentFormData) {
     setServerError(null)
@@ -78,14 +78,14 @@ export function EnrollmentFormPage() {
       await enrollmentFormsApi.submit(values)
       setIsSuccess(true)
       reset({
-        full_name: "",
+        fullName: "",
         email: "",
         phone: "",
-        interested_course: courseParam,
-        has_laptop: false,
-        laptop_specs: "",
-        has_internet: true,
-        why_join: "",
+        interestedCourse: courseParam,
+        hasLaptop: false,
+        laptopSpecs: "",
+        hasInternet: true,
+        whyJoin: "",
       })
     } catch (error) {
       const message =
@@ -108,9 +108,9 @@ export function EnrollmentFormPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 rounded-lg border p-6">
         <div className="grid gap-2">
           <Label htmlFor="full-name">Full Name</Label>
-          <Input id="full-name" {...register("full_name")} />
-          {errors.full_name ? (
-            <p className="text-sm text-destructive">{errors.full_name.message}</p>
+          <Input id="full-name" {...register("fullName")} />
+          {errors.fullName ? (
+            <p className="text-sm text-destructive">{errors.fullName.message}</p>
           ) : null}
         </div>
 
@@ -133,9 +133,9 @@ export function EnrollmentFormPage() {
 
         <div className="grid gap-2">
           <Label htmlFor="interested-course">Interested Course</Label>
-          <Input id="interested-course" {...register("interested_course")} />
-          {errors.interested_course ? (
-            <p className="text-sm text-destructive">{errors.interested_course.message}</p>
+          <Input id="interested-course" {...register("interestedCourse")} />
+          {errors.interestedCourse ? (
+            <p className="text-sm text-destructive">{errors.interestedCourse.message}</p>
           ) : null}
         </div>
 
@@ -143,13 +143,13 @@ export function EnrollmentFormPage() {
           <Label className="text-sm">Do you have a laptop?</Label>
           <div className="flex items-center gap-6">
             <label className="inline-flex items-center gap-2 text-sm">
-              <input type="radio" onChange={() => setValue("has_laptop", true)} checked={hasLaptop} />
+              <input type="radio" onChange={() => setValue("hasLaptop", true)} checked={hasLaptop} />
               Yes
             </label>
             <label className="inline-flex items-center gap-2 text-sm">
               <input
                 type="radio"
-                onChange={() => setValue("has_laptop", false)}
+                onChange={() => setValue("hasLaptop", false)}
                 checked={!hasLaptop}
               />
               No
@@ -161,12 +161,12 @@ export function EnrollmentFormPage() {
           <Label htmlFor="laptop-specs">Laptop Specs</Label>
           <Input
             id="laptop-specs"
-            {...register("laptop_specs")}
+            {...register("laptopSpecs")}
             disabled={!hasLaptop}
             placeholder="CPU, RAM, SSD/HDD"
           />
-          {errors.laptop_specs ? (
-            <p className="text-sm text-destructive">{errors.laptop_specs.message}</p>
+          {errors.laptopSpecs ? (
+            <p className="text-sm text-destructive">{errors.laptopSpecs.message}</p>
           ) : null}
         </div>
 
@@ -176,7 +176,7 @@ export function EnrollmentFormPage() {
             <label className="inline-flex items-center gap-2 text-sm">
               <input
                 type="radio"
-                onChange={() => setValue("has_internet", true)}
+                onChange={() => setValue("hasInternet", true)}
                 checked={hasInternet}
               />
               Yes
@@ -184,7 +184,7 @@ export function EnrollmentFormPage() {
             <label className="inline-flex items-center gap-2 text-sm">
               <input
                 type="radio"
-                onChange={() => setValue("has_internet", false)}
+                onChange={() => setValue("hasInternet", false)}
                 checked={!hasInternet}
               />
               No
@@ -194,9 +194,9 @@ export function EnrollmentFormPage() {
 
         <div className="grid gap-2">
           <Label htmlFor="why-join">Why do you want to join?</Label>
-          <Textarea id="why-join" rows={4} {...register("why_join")} />
-          {errors.why_join ? (
-            <p className="text-sm text-destructive">{errors.why_join.message}</p>
+          <Textarea id="why-join" rows={4} {...register("whyJoin")} />
+          {errors.whyJoin ? (
+            <p className="text-sm text-destructive">{errors.whyJoin.message}</p>
           ) : null}
         </div>
 

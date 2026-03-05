@@ -15,10 +15,12 @@ export function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setSuccessMessage(null)
 
     if (!token) {
       setError("Reset token is missing from URL.")
@@ -33,7 +35,8 @@ export function ResetPasswordPage() {
     setIsSubmitting(true)
 
     try {
-      await authApi.resetPassword({ token, password })
+      const result = await authApi.resetPassword({ token, newPassword: password })
+      setSuccessMessage(result.message)
       navigate("/auth/login", { replace: true })
     } catch {
       setError("Could not reset password. Your token may be invalid or expired.")
@@ -75,6 +78,7 @@ export function ResetPasswordPage() {
         </div>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Updating..." : "Update Password"}

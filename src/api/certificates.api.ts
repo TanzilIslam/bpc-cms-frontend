@@ -85,19 +85,19 @@ export const certificatesApi = {
     }
   },
 
-  async getMine(): Promise<StudentCertificate | null> {
+  async getMine(): Promise<StudentCertificate[]> {
     try {
       const payload = await getWithFallback(["/students/me/certificate", "/certificates/me"])
       if (!payload) {
-        return null
+        return []
       }
 
       const items = extractApiItems(payload)
       if (items.length > 0) {
-        return mapStudentCertificate(items[0])
+        return items.map((item) => mapStudentCertificate(item))
       }
 
-      return mapStudentCertificate(payload)
+      return [mapStudentCertificate(payload)]
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

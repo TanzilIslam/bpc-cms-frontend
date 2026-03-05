@@ -13,8 +13,8 @@ export type StudentAssignment = {
 }
 
 export type AssignmentSubmissionPayload = {
+  filePaths: string[]
   githubLink?: string
   liveDemoLink?: string
   notes?: string
-  files?: File[]
 }

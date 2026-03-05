@@ -50,6 +50,26 @@ const emptyForm: CourseFormState = {
   isPublished: false,
 }
 
+type CourseContentFormState = {
+  courseId: string
+  moduleTitle: string
+  contentTitle: string
+  contentType: "VIDEO" | "PDF" | "TEXT" | "LINK"
+  content: string
+  orderIndex: string
+  isPreview: boolean
+}
+
+const emptyContentForm: CourseContentFormState = {
+  courseId: "",
+  moduleTitle: "",
+  contentTitle: "",
+  contentType: "TEXT",
+  content: "",
+  orderIndex: "1",
+  isPreview: false,
+}
+
 function formFromCourse(course: Course): CourseFormState {
   return {
     title: course.title,
@@ -72,6 +92,7 @@ export function AdminCoursesPage() {
     reload,
     createCourse,
     updateCourse,
+    createCourseContent,
   } = useAdminCourses()
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -79,11 +100,24 @@ export function AdminCoursesPage() {
   const [form, setForm] = useState<CourseFormState>(emptyForm)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const [contentDialogOpen, setContentDialogOpen] = useState(false)
+  const [contentForm, setContentForm] = useState<CourseContentFormState>(emptyContentForm)
+  const [contentFormError, setContentFormError] = useState<string | null>(null)
+
   function openCreateDialog() {
     setEditingCourseId(null)
     setForm(emptyForm)
     setFormError(null)
     setDialogOpen(true)
+  }
+
+  function openCreateContentDialog() {
+    setContentForm({
+      ...emptyContentForm,
+      courseId: courses[0]?.id ?? "",
+    })
+    setContentFormError(null)
+    setContentDialogOpen(true)
   }
 
   function openEditDialog(course: Course) {
@@ -95,6 +129,55 @@ export function AdminCoursesPage() {
 
   function updateForm<K extends keyof CourseFormState>(key: K, value: CourseFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function updateContentForm<K extends keyof CourseContentFormState>(
+    key: K,
+    value: CourseContentFormState[K]
+  ) {
+    setContentForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSubmitCourseContent() {
+    setContentFormError(null)
+
+    if (!contentForm.courseId) {
+      setContentFormError("Select a course.")
+      return
+    }
+
+    if (contentForm.moduleTitle.trim().length < 2 || contentForm.contentTitle.trim().length < 2) {
+      setContentFormError("Module and content title are required.")
+      return
+    }
+
+    if (contentForm.content.trim().length === 0) {
+      setContentFormError("Content body/link is required.")
+      return
+    }
+
+    const orderIndex = Number(contentForm.orderIndex)
+    if (Number.isNaN(orderIndex) || orderIndex < 1) {
+      setContentFormError("Order must be 1 or greater.")
+      return
+    }
+
+    try {
+      await createCourseContent({
+        courseId: contentForm.courseId,
+        moduleTitle: contentForm.moduleTitle.trim(),
+        contentTitle: contentForm.contentTitle.trim(),
+        contentType: contentForm.contentType,
+        content: contentForm.content.trim(),
+        orderIndex,
+        isPreview: contentForm.isPreview,
+      })
+      setContentDialogOpen(false)
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : "Failed to create course content."
+      setContentFormError(message)
+    }
   }
 
   async function handleSubmitCourse() {
@@ -175,7 +258,14 @@ export function AdminCoursesPage() {
     <section className="space-y-4">
       <AdminPageHeader
         title="Courses"
-        actions={<Button onClick={openCreateDialog}>Create Course</Button>}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={openCreateContentDialog} disabled={courses.length === 0}>
+              Add Content
+            </Button>
+            <Button onClick={openCreateDialog}>Create Course</Button>
+          </div>
+        }
       />
       <InlineErrorMessage message={actionError} />
       {courses.length === 0 ? (
@@ -220,6 +310,107 @@ export function AdminCoursesPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={contentDialogOpen} onOpenChange={setContentDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Course Content</DialogTitle>
+            <DialogDescription>
+              Create a module/content item for an existing course.
+            </DialogDescription>
+          </DialogHeader>
+
+          <AdminFormGrid>
+            <AdminFormField id="content-course" label="Course">
+              <select
+                id="content-course"
+                value={contentForm.courseId}
+                onChange={(event) => updateContentForm("courseId", event.target.value)}
+                className={NATIVE_SELECT_CLASS_NAME}
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </AdminFormField>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <AdminFormField id="content-module-title" label="Module Title">
+                <Input
+                  id="content-module-title"
+                  value={contentForm.moduleTitle}
+                  onChange={(event) => updateContentForm("moduleTitle", event.target.value)}
+                />
+              </AdminFormField>
+              <AdminFormField id="content-title" label="Content Title">
+                <Input
+                  id="content-title"
+                  value={contentForm.contentTitle}
+                  onChange={(event) => updateContentForm("contentTitle", event.target.value)}
+                />
+              </AdminFormField>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <AdminFormField id="content-type" label="Content Type">
+                <select
+                  id="content-type"
+                  value={contentForm.contentType}
+                  onChange={(event) =>
+                    updateContentForm(
+                      "contentType",
+                      event.target.value as "VIDEO" | "PDF" | "TEXT" | "LINK"
+                    )
+                  }
+                  className={NATIVE_SELECT_CLASS_NAME}
+                >
+                  <option value="TEXT">Text</option>
+                  <option value="VIDEO">Video</option>
+                  <option value="PDF">PDF</option>
+                  <option value="LINK">Link</option>
+                </select>
+              </AdminFormField>
+              <AdminFormField id="content-order" label="Order">
+                <Input
+                  id="content-order"
+                  type="number"
+                  min={1}
+                  value={contentForm.orderIndex}
+                  onChange={(event) => updateContentForm("orderIndex", event.target.value)}
+                />
+              </AdminFormField>
+            </div>
+
+            <AdminFormField id="content-body" label="Content / URL">
+              <Textarea
+                id="content-body"
+                rows={4}
+                value={contentForm.content}
+                onChange={(event) => updateContentForm("content", event.target.value)}
+              />
+            </AdminFormField>
+
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={contentForm.isPreview}
+                onChange={(event) => updateContentForm("isPreview", event.target.checked)}
+              />
+              Allow preview access
+            </label>
+
+            <AdminFormError message={contentFormError} />
+          </AdminFormGrid>
+
+          <DialogFooter showCloseButton>
+            <Button onClick={() => void handleSubmitCourseContent()} disabled={isMutating}>
+              {isMutating ? "Saving..." : "Create Content"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
