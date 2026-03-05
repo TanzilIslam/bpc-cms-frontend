@@ -1,10 +1,10 @@
 export type EnrollmentFormPayload = {
-  full_name: string
+  fullName: string
   email: string
   phone: string
-  interested_course: string
-  has_laptop: boolean
-  laptop_specs?: string
-  has_internet: boolean
-  why_join: string
+  interestedCourse: string
+  hasLaptop: boolean
+  laptopSpecs?: string
+  hasInternet: boolean
+  whyJoin: string
 }

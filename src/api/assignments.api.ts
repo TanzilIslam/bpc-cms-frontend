@@ -1,8 +1,7 @@
 import { z } from "zod"
 
-import { apiClient } from "@/api/client"
 import { getHttpErrorMessage, mapApiItems } from "@/api/http"
-import { getWithFallback } from "@/api/request"
+import { getWithFallback, postWithFallback } from "@/api/request"
 import type {
   AssignmentSubmissionPayload,
   StudentAssignment,
@@ -61,29 +60,15 @@ export const assignmentsApi = {
     payload: AssignmentSubmissionPayload
   ): Promise<void> {
     try {
-      const formData = new FormData()
-
-      if (payload.githubLink) {
-        formData.append("github_link", payload.githubLink)
-      }
-
-      if (payload.liveDemoLink) {
-        formData.append("live_demo_link", payload.liveDemoLink)
-      }
-
-      if (payload.notes) {
-        formData.append("notes", payload.notes)
-      }
-
-      for (const file of payload.files ?? []) {
-        formData.append("files", file)
-      }
-
-      await apiClient.post(`/assignments/${assignmentId}/submit`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
+      await postWithFallback(
+        [`/students/me/assignments/${assignmentId}/submit`, `/assignments/${assignmentId}/submit`],
+        {
+          filePaths: payload.filePaths,
+          githubLink: payload.githubLink,
+          liveDemoLink: payload.liveDemoLink,
+          notes: payload.notes,
+        }
+      )
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

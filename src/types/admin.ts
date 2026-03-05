@@ -192,6 +192,17 @@ export type AdminCreateCoursePayload = {
 
 export type AdminUpdateCoursePayload = Partial<AdminCreateCoursePayload>
 
+export type AdminCreateCourseContentPayload = {
+  courseId: string
+  moduleTitle: string
+  contentTitle: string
+  contentType: "VIDEO" | "PDF" | "TEXT" | "LINK"
+  content: string
+  orderIndex: number
+  isPreview: boolean
+}
+
+
 export type AdminAnnouncementPriority = "LOW" | "MEDIUM" | "HIGH"
 export type AdminAnnouncementAudience = "ALL" | "BATCH_SPECIFIC" | "COURSE_SPECIFIC"
 

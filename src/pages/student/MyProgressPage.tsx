@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useAssignments } from "@/hooks/useAssignments"
 import { useEnrollments } from "@/hooks/useEnrollments"
+import { useStudentProgress } from "@/hooks/useStudentProgress"
 
 export function MyProgressPage() {
   const { enrollments, isLoading, error, reload } = useEnrollments()
+  const { progress, isLoading: isProgressLoading, error: progressError, reload: reloadProgress } = useStudentProgress()
   const {
     assignments,
     isLoading: isAssignmentsLoading,
@@ -20,13 +22,13 @@ export function MyProgressPage() {
     reload: reloadAssignments,
   } = useAssignments()
 
-  const averageProgress =
-    enrollments.length === 0
-      ? 0
-      : Math.round(
-          enrollments.reduce((sum, enrollment) => sum + enrollment.progressPercentage, 0) /
-            enrollments.length
-        )
+  const averageProgress = Math.round(
+    progress?.overallProgress ??
+      (enrollments.length === 0
+        ? 0
+        : enrollments.reduce((sum, enrollment) => sum + enrollment.progressPercentage, 0) /
+          enrollments.length)
+  )
 
   const gradedAssignments = assignments.filter((assignment) => assignment.status === "GRADED")
   const pendingAssignments = assignments.filter(
@@ -54,12 +56,18 @@ export function MyProgressPage() {
     },
   ]
 
-  if (isLoading) {
+  if (isLoading || isProgressLoading) {
     return <PageLoadingState message="Loading progress..." />
   }
 
-  if (error) {
-    return <PageErrorState message={error} onRetry={() => void reload()} />
+  if (error || progressError) {
+    return <PageErrorState
+      message={error ?? progressError ?? "Failed to load progress."}
+      onRetry={() => {
+        void reload()
+        void reloadProgress()
+      }}
+    />
   }
 
   return (

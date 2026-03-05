@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { apiClient } from "@/api/client"
 import { getHttpErrorMessage, mapApiItems } from "@/api/http"
-import type { StudentEnrollment } from "@/types/enrollment"
+import type { StudentEnrollment, StudentProgress } from "@/types/enrollment"
 
 const statusSchema = z.enum(["PENDING", "ACTIVE", "COMPLETED", "DROPPED", "SUSPENDED"])
 const paymentStatusSchema = z.enum(["UNPAID", "PARTIAL", "FULL"])
@@ -42,6 +42,35 @@ const enrollmentSchema = z.object({
   courseSlug: z.string().optional(),
 })
 
+
+const progressItemSchema = z.object({
+  enrollment_id: z.string().or(z.number()).optional(),
+  enrollmentId: z.string().or(z.number()).optional(),
+  course_id: z.string().or(z.number()).optional(),
+  courseId: z.string().or(z.number()).optional(),
+  progress_percentage: z.number().optional(),
+  progressPercentage: z.number().optional(),
+})
+
+const progressSchema = z.object({
+  overall_progress: z.number().optional(),
+  overallProgress: z.number().optional(),
+  courses: z.array(progressItemSchema).optional(),
+})
+
+function mapStudentProgress(rawValue: unknown): StudentProgress {
+  const raw = progressSchema.parse(rawValue)
+
+  return {
+    overallProgress: raw.overall_progress ?? raw.overallProgress ?? 0,
+    courses: (raw.courses ?? []).map((item) => ({
+      enrollmentId: String(item.enrollment_id ?? item.enrollmentId ?? ""),
+      courseId: String(item.course_id ?? item.courseId ?? ""),
+      progressPercentage: item.progress_percentage ?? item.progressPercentage ?? 0,
+    })),
+  }
+}
+
 function mapEnrollment(rawValue: unknown): StudentEnrollment {
   const raw = enrollmentSchema.parse(rawValue)
 
@@ -66,6 +95,15 @@ export const enrollmentsApi = {
     try {
       const response = await apiClient.get("/students/me/enrollments")
       return mapApiItems(response.data, mapEnrollment)
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getMyProgress(): Promise<StudentProgress> {
+    try {
+      const response = await apiClient.get("/students/me/progress")
+      return mapStudentProgress(response.data)
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

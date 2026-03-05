@@ -160,10 +160,10 @@ export const taApi = {
     try {
       for (const record of payload.records) {
         const body = {
-          batch_id: payload.batchId,
-          class_date: payload.classDate,
-          class_topic: payload.classTopic,
-          student_id: record.studentId,
+          batchId: payload.batchId,
+          classDate: payload.classDate,
+          classTopic: payload.classTopic,
+          studentId: record.studentId,
           status: record.status,
           notes: record.notes,
         }
@@ -193,8 +193,7 @@ export const taApi = {
     payload: GradeAssignmentPayload
   ): Promise<void> {
     const body = {
-      submission_id: payload.submissionId,
-      student_id: payload.studentId,
+      studentId: payload.studentId,
       score: payload.score,
       feedback: payload.feedback,
       status: payload.status ?? "GRADED",

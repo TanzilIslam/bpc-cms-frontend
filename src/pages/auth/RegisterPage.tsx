@@ -16,8 +16,7 @@ export function RegisterPage() {
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [laptopSpecs, setLaptopSpecs] = useState("")
-  const [internetSpeed, setInternetSpeed] = useState("")
+  const [address, setAddress] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,12 +36,11 @@ export function RegisterPage() {
 
     try {
       await register({
-        full_name: fullName,
+        fullName,
         email,
         phone,
         password,
-        laptop_specs: laptopSpecs || undefined,
-        internet_speed: internetSpeed || undefined,
+        address: address || undefined,
       })
     } catch {
       setError("Registration failed. Please check your data and try again.")
@@ -115,20 +113,11 @@ export function RegisterPage() {
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="laptop-specs">Laptop Specs (optional)</Label>
+          <Label htmlFor="address">Address (optional)</Label>
           <Input
-            id="laptop-specs"
-            value={laptopSpecs}
-            onChange={(event) => setLaptopSpecs(event.target.value)}
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="internet-speed">Internet Speed (optional)</Label>
-          <Input
-            id="internet-speed"
-            value={internetSpeed}
-            onChange={(event) => setInternetSpeed(event.target.value)}
+            id="address"
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
           />
         </div>
 

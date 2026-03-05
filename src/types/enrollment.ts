@@ -18,3 +18,14 @@ export type StudentEnrollment = {
   amountPaid: number
   totalFee: number
 }
+
+export type StudentCourseProgress = {
+  enrollmentId: string
+  courseId: string
+  progressPercentage: number
+}
+
+export type StudentProgress = {
+  overallProgress: number
+  courses: StudentCourseProgress[]
+}

@@ -4,6 +4,7 @@ import { adminApi } from "@/api/admin.api"
 import { useAsyncMutation, useAsyncResource } from "@/hooks/useAsyncState"
 import type {
   AdminCreateCoursePayload,
+  AdminCreateCourseContentPayload,
   AdminUpdateCoursePayload,
 } from "@/types/admin"
 import type { Course } from "@/types/course"
@@ -17,6 +18,7 @@ type AdminCoursesState = {
   reload: () => Promise<void>
   createCourse: (payload: AdminCreateCoursePayload) => Promise<void>
   updateCourse: (courseId: string, payload: AdminUpdateCoursePayload) => Promise<void>
+  createCourseContent: (payload: AdminCreateCourseContentPayload) => Promise<void>
 }
 
 export function useAdminCourses(): AdminCoursesState {
@@ -38,6 +40,15 @@ export function useAdminCourses(): AdminCoursesState {
     [reload, runMutation]
   )
 
+  const createCourseContent = useCallback(
+    async (payload: AdminCreateCourseContentPayload) => {
+      await runMutation(async () => {
+        await adminApi.createCourseContent(payload)
+      }, "Failed to create course content.")
+    },
+    [runMutation]
+  )
+
   const updateCourse = useCallback(
     async (courseId: string, payload: AdminUpdateCoursePayload) => {
       await runMutation(async () => {
@@ -57,5 +68,6 @@ export function useAdminCourses(): AdminCoursesState {
     reload,
     createCourse,
     updateCourse,
+    createCourseContent,
   }
 }

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react"
+
+import { filesApi } from "@/api/files.api"
 import { useDropzone } from "react-dropzone"
 import { FileText, Upload, X } from "lucide-react"
 
@@ -31,7 +33,7 @@ type SubmissionDialogProps = {
     githubLink?: string
     liveDemoLink?: string
     notes?: string
-    files?: File[]
+    filePaths: string[]
   }) => Promise<void>
 }
 
@@ -63,11 +65,21 @@ function SubmissionDialog({
     setError(null)
 
     try {
+      const uploadedFiles = await Promise.all(
+        files.map((file) =>
+          filesApi.upload(file, {
+            entityType: "ASSIGNMENT",
+            entityId: assignment.id,
+            isPublic: false,
+          })
+        )
+      )
+
       await onSubmit({
         githubLink: githubLink || undefined,
         liveDemoLink: liveDemoLink || undefined,
         notes: notes || undefined,
-        files,
+        filePaths: uploadedFiles.map((item) => item.filePath),
       })
       setGithubLink("")
       setLiveDemoLink("")
@@ -188,7 +200,7 @@ export function AssignmentsPage() {
     githubLink?: string
     liveDemoLink?: string
     notes?: string
-    files?: File[]
+    filePaths: string[]
   }) {
     if (!selectedAssignment) {
       return

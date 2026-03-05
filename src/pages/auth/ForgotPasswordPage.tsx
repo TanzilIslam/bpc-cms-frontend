@@ -10,17 +10,17 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-    setIsSuccess(false)
+    setSuccessMessage(null)
     setIsSubmitting(true)
 
     try {
-      await authApi.forgotPassword({ email })
-      setIsSuccess(true)
+      const result = await authApi.forgotPassword({ email })
+      setSuccessMessage(result.message)
     } catch {
       setError("Could not send reset request. Try again.")
     } finally {
@@ -48,11 +48,7 @@ export function ForgotPasswordPage() {
         </div>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        {isSuccess ? (
-          <p className="text-sm text-green-600">
-            Reset instructions sent if this email exists.
-          </p>
-        ) : null}
+        {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Sending..." : "Send Reset Link"}

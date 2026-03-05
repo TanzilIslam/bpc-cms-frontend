@@ -99,10 +99,12 @@ export const useAuthStore = create<AuthStore>()(
       logout: async () => {
         const refreshTokenValue = get().refreshTokenValue
 
-        try {
-          await authApi.logout(refreshTokenValue)
-        } catch {
-          // Ignore logout request errors and clear local session anyway.
+        if (refreshTokenValue) {
+          try {
+            await authApi.logout({ refreshToken: refreshTokenValue })
+          } catch {
+            // Ignore logout request errors and clear local session anyway.
+          }
         }
 
         get().clearSession()
@@ -116,7 +118,7 @@ export const useAuthStore = create<AuthStore>()(
           throw new Error("Refresh token missing.")
         }
 
-        const result = await authApi.refresh(refreshTokenValue)
+        const result = await authApi.refresh({ refreshToken: refreshTokenValue })
         set({
           accessToken: result.accessToken,
           refreshTokenValue: result.refreshToken ?? refreshTokenValue,

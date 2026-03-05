@@ -15,6 +15,7 @@ import type {
   AdminConvertEnrollmentRequestPayload,
   AdminCreateBatchPayload,
   AdminCreateCoursePayload,
+  AdminCreateCourseContentPayload,
   AdminCreateExpensePayload,
   AdminCreateFinancialGoalPayload,
   AdminEnrollment,
@@ -526,25 +527,37 @@ function buildCourseRequestBody(
   return {
     title: payload.title,
     description: payload.description,
-    duration_months: payload.durationMonths,
+    durationMonths: payload.durationMonths,
     price: payload.price,
-    difficulty_level: payload.difficultyLevel,
-    skills_covered: payload.skillsCovered,
-    is_published: payload.isPublished,
+    difficultyLevel: payload.difficultyLevel,
+    skillsCovered: payload.skillsCovered,
+    isPublished: payload.isPublished,
   }
 }
 
 function buildBatchRequestBody(payload: AdminCreateBatchPayload | AdminUpdateBatchPayload) {
   return {
-    course_id: payload.courseId,
-    batch_name: payload.batchName,
-    batch_code: payload.batchCode,
-    start_date: payload.startDate,
-    end_date: payload.endDate,
+    courseId: payload.courseId,
+    batchName: payload.batchName,
+    batchCode: payload.batchCode,
+    startDate: payload.startDate,
+    endDate: payload.endDate,
     schedule: payload.schedule,
-    max_students: payload.maxStudents,
+    maxStudents: payload.maxStudents,
     status: payload.status,
-    is_free: payload.isFree,
+    isFree: payload.isFree,
+  }
+}
+
+function buildCourseContentRequestBody(payload: AdminCreateCourseContentPayload) {
+  return {
+    courseId: payload.courseId,
+    moduleTitle: payload.moduleTitle,
+    contentTitle: payload.contentTitle,
+    contentType: payload.contentType,
+    content: payload.content,
+    orderIndex: payload.orderIndex,
+    isPreview: payload.isPreview,
   }
 }
 
@@ -563,13 +576,13 @@ function buildAnnouncementRequestBody(payload: Partial<AdminAnnouncementPayload>
 
 function buildRecordPaymentRequestBody(payload: AdminRecordPaymentPayload) {
   return {
-    enrollment_id: payload.enrollmentId,
-    student_id: payload.studentId,
+    enrollmentId: payload.enrollmentId,
+    studentId: payload.studentId,
     amount: payload.amount,
-    installment_number: payload.installmentNumber,
-    payment_method: payload.paymentMethod,
+    installmentNumber: payload.installmentNumber,
+    paymentMethod: payload.paymentMethod,
     status: payload.status,
-    transaction_id: payload.transactionId,
+    transactionId: payload.transactionId,
     notes: payload.notes,
   }
 }
@@ -713,6 +726,16 @@ export const adminApi = {
     )
   },
 
+  async createCourseContent(
+    payload: AdminCreateCourseContentPayload
+  ): Promise<unknown> {
+    try {
+      return await postWithFallback(["/admin/courses/content"], buildCourseContentRequestBody(payload))
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
   async getOverview(): Promise<AdminOverview> {
     try {
       const payload = await getWithFallback(["/admin/analytics/dashboard", "/admin/financials"])
@@ -852,7 +875,7 @@ export const adminApi = {
     return executeMappedMutation(
       () =>
         apiClient.post("/admin/certificates/generate", {
-          enrollment_id: payload.enrollmentId,
+          enrollmentId: payload.enrollmentId,
         }),
       mapCertificate
     )

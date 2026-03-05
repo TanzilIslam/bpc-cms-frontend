@@ -4,32 +4,43 @@ import { env } from "@/config/env"
 import type { AuthUser, UserRole } from "@/types/auth"
 
 export type RegisterPayload = {
-  full_name: string
+  fullName: string
   email: string
   password: string
   phone: string
-  laptop_specs?: string
-  internet_speed?: string
+  address?: string
 }
 
-type LoginPayload = {
+export type LoginPayload = {
   email: string
   password: string
 }
 
-type ForgotPasswordPayload = {
+export type LogoutPayload = {
+  refreshToken: string
+}
+
+export type ForgotPasswordPayload = {
   email: string
 }
 
-type ResetPasswordPayload = {
+export type ResetPasswordPayload = {
   token: string
-  password: string
+  newPassword: string
 }
 
 type LoginResult = {
   user: AuthUser
   accessToken: string
   refreshToken?: string | null
+}
+
+export type RefreshTokenPayload = {
+  refreshToken: string
+}
+
+type ActionMessageResult = {
+  message: string
 }
 
 type RefreshResult = {
@@ -97,7 +108,7 @@ export const authApi = {
     const data = extractData(response.data as AuthApiResponse)
 
     return {
-      user: toAuthUser(data.user),
+      user: toAuthUser(data.user ?? data),
       accessToken: String(data.accessToken ?? data.access_token ?? ""),
       refreshToken:
         data.refreshToken !== undefined
@@ -108,11 +119,8 @@ export const authApi = {
     }
   },
 
-  async refresh(refreshToken?: string | null): Promise<RefreshResult> {
-    const response = await authClient.post(
-      "/auth/refresh",
-      refreshToken ? { refreshToken } : {}
-    )
+  async refresh(payload: RefreshTokenPayload): Promise<RefreshResult> {
+    const response = await authClient.post("/auth/refresh-token", payload)
     const data = extractData(response.data as AuthApiResponse)
 
     return {
@@ -126,16 +134,26 @@ export const authApi = {
     }
   },
 
-  async logout(refreshToken?: string | null): Promise<void> {
-    await authClient.post("/auth/logout", refreshToken ? { refreshToken } : {})
+  async logout(payload: LogoutPayload): Promise<void> {
+    await authClient.post("/auth/logout", payload)
   },
 
-  async forgotPassword(payload: ForgotPasswordPayload): Promise<void> {
-    await authClient.post("/auth/forgot-password", payload)
+  async forgotPassword(payload: ForgotPasswordPayload): Promise<ActionMessageResult> {
+    const response = await authClient.post("/auth/forgot-password", payload)
+    const data = extractData(response.data as AuthApiResponse)
+
+    return {
+      message: String(data.message ?? "Password reset token sent if account exists"),
+    }
   },
 
-  async resetPassword(payload: ResetPasswordPayload): Promise<void> {
-    await authClient.post("/auth/reset-password", payload)
+  async resetPassword(payload: ResetPasswordPayload): Promise<ActionMessageResult> {
+    const response = await authClient.post("/auth/reset-password", payload)
+    const data = extractData(response.data as AuthApiResponse)
+
+    return {
+      message: String(data.message ?? "Password has been reset"),
+    }
   },
 
   async getCurrentUser(accessToken: string): Promise<AuthUser> {

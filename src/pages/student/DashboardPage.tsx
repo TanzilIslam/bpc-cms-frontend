@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
 import { useAssignments } from "@/hooks/useAssignments"
 import { useEnrollments } from "@/hooks/useEnrollments"
+import { useStudentProfile } from "@/hooks/useStudentProfile"
 
 export function StudentDashboardPage() {
+  const { profile } = useStudentProfile()
   const { enrollments, isLoading: enrollmentsLoading } = useEnrollments()
   const { assignments, isLoading: assignmentsLoading } = useAssignments()
 
@@ -37,7 +39,7 @@ export function StudentDashboardPage() {
     <section className="space-y-6">
       <PageHeader
         title="Student Dashboard"
-        description="Overview of your courses, progress, and assignment workload."
+        description={`Overview of your courses, progress, and assignment workload${profile?.fullName ? `, ${profile.fullName}` : ""}.`}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
