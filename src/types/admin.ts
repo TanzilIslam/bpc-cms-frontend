@@ -235,6 +235,16 @@ export type AdminConvertEnrollmentRequestPayload = {
   notes?: string
 }
 
+export type AdminCreateEnrollmentPayload = {
+  studentId: string
+  batchId: string
+  courseId: string
+  totalFee?: number
+  paymentStatus?: AdminEnrollmentPaymentStatus
+  enrollmentStatus?: AdminEnrollmentStatus
+  accessType?: "LIVE" | "RECORDED" | "BOTH"
+}
+
 export type AdminTestimonial = {
   id: string
   studentName: string
@@ -244,4 +254,142 @@ export type AdminTestimonial = {
   isApproved: boolean
   isFeatured: boolean
   createdAt: string | null
+}
+
+export type AdminUser = {
+  id: string
+  email: string
+  fullName: string
+  phone: string | null
+  role: string
+  status: AdminStudentStatus
+  address: string | null
+  createdAt: string | null
+}
+
+export type UpdateUserRolePayload = {
+  role: string
+}
+
+export type AssignTaPayload = {
+  taIds: string[]
+}
+
+export type AdminBatchStudent = {
+  id: string
+  fullName: string
+  email: string
+  phone: string
+  enrollmentId: string
+  enrollmentStatus: AdminEnrollmentStatus
+  paymentStatus: AdminEnrollmentPaymentStatus
+  amountPaid: number
+  totalFee: number
+  progressPercentage: number
+}
+
+export type AdminAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"
+
+export type AdminBatchAttendance = {
+  id: string
+  studentId: string
+  studentName: string
+  classDate: string
+  classTopic: string | null
+  status: AdminAttendanceStatus
+  notes: string | null
+}
+
+export type UpdateEnrollmentStatusPayload = {
+  enrollmentStatus: AdminEnrollmentStatus
+  finalGrade?: string
+}
+
+export type AdminAssignmentType = "PROJECT" | "QUIZ" | "CODE" | "WRITTEN"
+
+export type AdminAssignment = {
+  id: string
+  courseContentId: string
+  title: string
+  description: string
+  assignmentType: AdminAssignmentType
+  maxScore: number
+  dueDate: string | null
+  requiredFiles: string[]
+  submissionInstructions: string | null
+}
+
+export type AdminCreateAssignmentPayload = {
+  courseContentId: string
+  title: string
+  assignmentType: AdminAssignmentType
+  description?: string
+  maxScore?: number
+  dueDate?: string
+  requiredFiles?: string[]
+  submissionInstructions?: string
+}
+
+export type AdminSubmissionStatus = "SUBMITTED" | "GRADED" | "REVISION_NEEDED"
+
+export type AdminSubmission = {
+  id: string
+  assignmentId: string
+  assignmentTitle: string
+  studentId: string
+  studentName: string
+  filePaths: string[]
+  githubLink: string | null
+  liveDemoLink: string | null
+  notes: string | null
+  submittedAt: string | null
+  status: AdminSubmissionStatus
+  score: number | null
+  feedback: string | null
+  gradedBy: string | null
+  gradedAt: string | null
+}
+
+export type AdminGradeSubmissionPayload = {
+  score?: number
+  feedback?: string
+  status: AdminSubmissionStatus
+}
+
+export type AdminRevenueDataPoint = {
+  period: string
+  revenue: number
+  payments: number
+}
+
+export type AdminAnalyticsRevenue = {
+  totalRevenue: number
+  revenueByPeriod: AdminRevenueDataPoint[]
+  revenueByPaymentMethod: Record<string, number>
+}
+
+export type AdminStudentDataPoint = {
+  period: string
+  newStudents: number
+  activeStudents: number
+}
+
+export type AdminAnalyticsStudents = {
+  totalStudents: number
+  activeStudents: number
+  inactiveStudents: number
+  studentsByPeriod: AdminStudentDataPoint[]
+}
+
+export type AdminCourseAnalyticsItem = {
+  courseId: string
+  courseTitle: string
+  enrollments: number
+  revenue: number
+  completionRate: number
+}
+
+export type AdminAnalyticsCourses = {
+  totalCourses: number
+  courses: AdminCourseAnalyticsItem[]
 }

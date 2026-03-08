@@ -1,8 +1,13 @@
 import { z } from "zod"
 
 import { apiClient } from "@/api/client"
-import { getHttpErrorMessage, mapApiItems } from "@/api/http"
-import type { StudentEnrollment, StudentProgress } from "@/types/enrollment"
+import { extractApiData, getHttpErrorMessage, mapApiItems } from "@/api/http"
+import type {
+  EnrollmentProgress,
+  StudentCreateEnrollmentPayload,
+  StudentEnrollment,
+  StudentProgress,
+} from "@/types/enrollment"
 
 const statusSchema = z.enum(["PENDING", "ACTIVE", "COMPLETED", "DROPPED", "SUSPENDED"])
 const paymentStatusSchema = z.enum(["UNPAID", "PARTIAL", "FULL"])
@@ -51,6 +56,30 @@ const progressItemSchema = z.object({
   progress_percentage: z.number().optional(),
   progressPercentage: z.number().optional(),
 })
+
+const enrollmentProgressSchema = z.object({
+  enrollment_id: z.string().or(z.number()).optional(),
+  enrollmentId: z.string().or(z.number()).optional(),
+  course_id: z.string().or(z.number()).optional(),
+  courseId: z.string().or(z.number()).optional(),
+  progress_percentage: z.number().optional(),
+  progressPercentage: z.number().optional(),
+  completed_items: z.number().optional(),
+  completedItems: z.number().optional(),
+  total_items: z.number().optional(),
+  totalItems: z.number().optional(),
+})
+
+function mapEnrollmentProgress(rawValue: unknown): EnrollmentProgress {
+  const raw = enrollmentProgressSchema.parse(rawValue)
+  return {
+    enrollmentId: String(raw.enrollment_id ?? raw.enrollmentId ?? ""),
+    courseId: String(raw.course_id ?? raw.courseId ?? ""),
+    progressPercentage: raw.progress_percentage ?? raw.progressPercentage ?? 0,
+    completedItems: raw.completed_items ?? raw.completedItems ?? 0,
+    totalItems: raw.total_items ?? raw.totalItems ?? 0,
+  }
+}
 
 const progressSchema = z.object({
   overall_progress: z.number().optional(),
@@ -104,6 +133,26 @@ export const enrollmentsApi = {
     try {
       const response = await apiClient.get("/students/me/progress")
       return mapStudentProgress(response.data)
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getEnrollmentProgress(enrollmentId: string): Promise<EnrollmentProgress> {
+    try {
+      const response = await apiClient.get(
+        `/students/me/enrollments/${enrollmentId}/progress`
+      )
+      return mapEnrollmentProgress(extractApiData(response.data))
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async createMine(payload: StudentCreateEnrollmentPayload): Promise<StudentEnrollment> {
+    try {
+      const response = await apiClient.post("/enrollments", payload)
+      return mapEnrollment(extractApiData(response.data))
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

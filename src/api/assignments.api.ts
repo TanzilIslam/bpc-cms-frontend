@@ -3,12 +3,48 @@ import { z } from "zod"
 import { getHttpErrorMessage, mapApiItems } from "@/api/http"
 import { getWithFallback, postWithFallback } from "@/api/request"
 import type {
+  AssignmentDetail,
   AssignmentSubmissionPayload,
+  AssignmentType,
   StudentAssignment,
   SubmissionStatus,
 } from "@/types/assignment"
 
 const submissionStatusSchema = z.enum(["SUBMITTED", "GRADED", "REVISION_NEEDED"])
+const assignmentTypeSchema = z.enum(["PROJECT", "QUIZ", "CODE", "WRITTEN"])
+
+const assignmentDetailSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  course_content_id: z.string().or(z.number()).optional(),
+  courseContentId: z.string().or(z.number()).optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  assignment_type: assignmentTypeSchema.optional(),
+  assignmentType: assignmentTypeSchema.optional(),
+  max_score: z.number().optional(),
+  maxScore: z.number().optional(),
+  due_date: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  required_files: z.array(z.string()).optional(),
+  requiredFiles: z.array(z.string()).optional(),
+  submission_instructions: z.string().nullable().optional(),
+  submissionInstructions: z.string().nullable().optional(),
+})
+
+function mapAssignmentDetail(rawValue: unknown): AssignmentDetail {
+  const raw = assignmentDetailSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    courseContentId: String(raw.course_content_id ?? raw.courseContentId ?? ""),
+    title: raw.title ?? "",
+    description: raw.description ?? "",
+    assignmentType: (raw.assignment_type ?? raw.assignmentType ?? "PROJECT") as AssignmentType,
+    maxScore: raw.max_score ?? raw.maxScore ?? 100,
+    dueDate: raw.due_date ?? raw.dueDate ?? null,
+    requiredFiles: raw.required_files ?? raw.requiredFiles ?? [],
+    submissionInstructions: raw.submission_instructions ?? raw.submissionInstructions ?? null,
+  }
+}
 
 const assignmentSchema = z.object({
   id: z.string().or(z.number()).optional(),
@@ -50,6 +86,15 @@ export const assignmentsApi = {
     try {
       const payload = await getWithFallback(["/students/me/assignments", "/assignments"])
       return mapApiItems(payload, mapAssignment)
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getById(assignmentId: string): Promise<AssignmentDetail> {
+    try {
+      const data = await getWithFallback([`/assignments/${assignmentId}`])
+      return mapAssignmentDetail(data)
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

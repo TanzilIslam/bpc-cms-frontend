@@ -29,3 +29,15 @@ export type StudentProgress = {
   overallProgress: number
   courses: StudentCourseProgress[]
 }
+
+export type EnrollmentProgress = {
+  enrollmentId: string
+  courseId: string
+  progressPercentage: number
+  completedItems: number
+  totalItems: number
+}
+
+export type StudentCreateEnrollmentPayload = {
+  batchId: string
+}

@@ -2,9 +2,41 @@ import { z } from "zod"
 
 import { apiClient } from "@/api/client"
 import { extractApiData, getHttpErrorMessage, mapApiItems } from "@/api/http"
-import type { Course, CourseDifficulty } from "@/types/course"
+import type { ContentType, Course, CourseDifficulty, CourseContent } from "@/types/course"
 
 const difficultySchema = z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"])
+const contentTypeSchema = z.enum(["VIDEO", "PDF", "TEXT", "LINK"])
+
+const courseContentSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  course_id: z.string().or(z.number()).optional(),
+  courseId: z.string().or(z.number()).optional(),
+  module_title: z.string().optional(),
+  moduleTitle: z.string().optional(),
+  content_title: z.string().optional(),
+  contentTitle: z.string().optional(),
+  content_type: contentTypeSchema.optional(),
+  contentType: contentTypeSchema.optional(),
+  content: z.string().nullable().optional(),
+  order_index: z.number().optional(),
+  orderIndex: z.number().optional(),
+  is_preview: z.boolean().optional(),
+  isPreview: z.boolean().optional(),
+})
+
+function mapCourseContent(rawValue: unknown): CourseContent {
+  const raw = courseContentSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    courseId: String(raw.course_id ?? raw.courseId ?? ""),
+    moduleTitle: raw.module_title ?? raw.moduleTitle ?? "",
+    contentTitle: raw.content_title ?? raw.contentTitle ?? "",
+    contentType: (raw.content_type ?? raw.contentType ?? "TEXT") as ContentType,
+    content: raw.content ?? null,
+    orderIndex: raw.order_index ?? raw.orderIndex ?? 0,
+    isPreview: raw.is_preview ?? raw.isPreview ?? false,
+  }
+}
 
 const courseRawSchema = z.object({
   id: z.string().or(z.number()).optional(),
@@ -58,6 +90,15 @@ export const coursesApi = {
       const response = await apiClient.get(`/courses/${slug}`)
       const payload = extractApiData(response.data)
       return mapCourse(payload)
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getContent(courseId: string): Promise<CourseContent[]> {
+    try {
+      const response = await apiClient.get(`/courses/${courseId}/content`)
+      return mapApiItems(response.data, mapCourseContent)
     } catch (error) {
       throw new Error(getHttpErrorMessage(error))
     }

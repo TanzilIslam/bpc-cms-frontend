@@ -2,17 +2,28 @@ import { z } from "zod"
 
 import { apiClient } from "@/api/client"
 import { extractApiData, getHttpErrorMessage, mapApiItems } from "@/api/http"
-import { getWithFallback, postWithFallback, putWithFallback } from "@/api/request"
+import { deleteWithFallback, getWithFallback, postWithFallback, putWithFallback } from "@/api/request"
 import type { Course } from "@/types/course"
 import type {
   AdminAnnouncement,
   AdminAnnouncementAudience,
   AdminAnnouncementPayload,
   AdminAnnouncementPriority,
+  AdminAnalyticsCourses,
+  AdminAnalyticsRevenue,
+  AdminAnalyticsStudents,
+  AdminAssignment,
+  AdminAssignmentType,
+  AdminAttendanceStatus,
   AdminBatch,
+  AdminBatchAttendance,
   AdminBatchStatus,
+  AdminBatchStudent,
   AdminCertificate,
   AdminConvertEnrollmentRequestPayload,
+  AdminCourseAnalyticsItem,
+  AdminCreateAssignmentPayload,
+  AdminCreateEnrollmentPayload,
   AdminCreateBatchPayload,
   AdminCreateCoursePayload,
   AdminCreateCourseContentPayload,
@@ -28,17 +39,26 @@ import type {
   AdminFinancialGoalStatus,
   AdminFinancialSummary,
   AdminGenerateCertificatePayload,
+  AdminGradeSubmissionPayload,
   AdminOverview,
   AdminPayment,
   AdminRecordPaymentPayload,
   AdminPaymentStatus,
+  AdminRevenueDataPoint,
   AdminStudent,
+  AdminStudentDataPoint,
   AdminStudentStatus,
+  AdminSubmission,
+  AdminSubmissionStatus,
   AdminTestimonial,
   AdminUpdateBatchPayload,
   AdminUpdateCoursePayload,
   AdminUpdateFinancialGoalPayload,
+  AdminUser,
+  AssignTaPayload,
   EnrollmentRequestStatus,
+  UpdateEnrollmentStatusPayload,
+  UpdateUserRolePayload,
 } from "@/types/admin"
 
 const studentStatusSchema = z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"])
@@ -301,6 +321,122 @@ const testimonialSchema = z.object({
     .optional(),
 })
 
+const attendanceStatusSchema = z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"])
+const assignmentTypeSchema = z.enum(["PROJECT", "QUIZ", "CODE", "WRITTEN"])
+
+const userSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  full_name: z.string().optional(),
+  fullName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().nullable().optional(),
+  role: z.string().optional(),
+  status: studentStatusSchema.optional(),
+  address: z.string().nullable().optional(),
+  created_at: z.string().optional(),
+  createdAt: z.string().optional(),
+})
+
+const batchStudentSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  full_name: z.string().optional(),
+  fullName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  enrollment_id: z.string().or(z.number()).optional(),
+  enrollmentId: z.string().or(z.number()).optional(),
+  enrollment_status: enrollmentStatusSchema.optional(),
+  enrollmentStatus: enrollmentStatusSchema.optional(),
+  payment_status: enrollmentPaymentStatusSchema.optional(),
+  paymentStatus: enrollmentPaymentStatusSchema.optional(),
+  amount_paid: z.number().or(z.string()).optional(),
+  amountPaid: z.number().or(z.string()).optional(),
+  total_fee: z.number().or(z.string()).optional(),
+  totalFee: z.number().or(z.string()).optional(),
+  progress_percentage: z.number().optional(),
+  progressPercentage: z.number().optional(),
+  enrollment: z
+    .object({
+      id: z.string().or(z.number()).optional(),
+      enrollment_status: enrollmentStatusSchema.optional(),
+      enrollmentStatus: enrollmentStatusSchema.optional(),
+      payment_status: enrollmentPaymentStatusSchema.optional(),
+      paymentStatus: enrollmentPaymentStatusSchema.optional(),
+      amount_paid: z.number().or(z.string()).optional(),
+      amountPaid: z.number().or(z.string()).optional(),
+      total_fee: z.number().or(z.string()).optional(),
+      totalFee: z.number().or(z.string()).optional(),
+    })
+    .optional(),
+})
+
+const batchAttendanceSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  student_id: z.string().or(z.number()).optional(),
+  studentId: z.string().or(z.number()).optional(),
+  student_name: z.string().optional(),
+  studentName: z.string().optional(),
+  student: z
+    .object({ full_name: z.string().optional(), fullName: z.string().optional() })
+    .optional(),
+  class_date: z.string().optional(),
+  classDate: z.string().optional(),
+  class_topic: z.string().nullable().optional(),
+  classTopic: z.string().nullable().optional(),
+  status: attendanceStatusSchema.optional(),
+  notes: z.string().nullable().optional(),
+})
+
+const assignmentSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  course_content_id: z.string().or(z.number()).optional(),
+  courseContentId: z.string().or(z.number()).optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  assignment_type: assignmentTypeSchema.optional(),
+  assignmentType: assignmentTypeSchema.optional(),
+  max_score: z.number().optional(),
+  maxScore: z.number().optional(),
+  due_date: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  required_files: z.array(z.string()).optional(),
+  requiredFiles: z.array(z.string()).optional(),
+  submission_instructions: z.string().nullable().optional(),
+  submissionInstructions: z.string().nullable().optional(),
+})
+
+const submissionStatusSchema = z.enum(["SUBMITTED", "GRADED", "REVISION_NEEDED"])
+
+const submissionSchema = z.object({
+  id: z.string().or(z.number()).optional(),
+  assignment_id: z.string().or(z.number()).optional(),
+  assignmentId: z.string().or(z.number()).optional(),
+  assignment_title: z.string().optional(),
+  assignmentTitle: z.string().optional(),
+  assignment: z.object({ title: z.string().optional() }).optional(),
+  student_id: z.string().or(z.number()).optional(),
+  studentId: z.string().or(z.number()).optional(),
+  student_name: z.string().optional(),
+  studentName: z.string().optional(),
+  student: z.object({ full_name: z.string().optional(), fullName: z.string().optional() }).optional(),
+  file_paths: z.array(z.string()).optional(),
+  filePaths: z.array(z.string()).optional(),
+  github_link: z.string().nullable().optional(),
+  githubLink: z.string().nullable().optional(),
+  live_demo_link: z.string().nullable().optional(),
+  liveDemoLink: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  submitted_at: z.string().nullable().optional(),
+  submittedAt: z.string().nullable().optional(),
+  status: submissionStatusSchema.optional(),
+  score: z.number().or(z.string()).nullable().optional(),
+  feedback: z.string().nullable().optional(),
+  graded_by: z.string().nullable().optional(),
+  gradedBy: z.string().nullable().optional(),
+  graded_at: z.string().nullable().optional(),
+  gradedAt: z.string().nullable().optional(),
+})
+
 function mapStudent(rawValue: unknown): AdminStudent {
   const raw = studentSchema.parse(rawValue)
 
@@ -500,6 +636,105 @@ function mapTestimonial(rawValue: unknown): AdminTestimonial {
   }
 }
 
+function mapUser(rawValue: unknown): AdminUser {
+  const raw = userSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    email: raw.email ?? "",
+    fullName: raw.full_name ?? raw.fullName ?? "",
+    phone: raw.phone ?? null,
+    role: raw.role ?? "STUDENT",
+    status: (raw.status ?? "ACTIVE") as AdminStudentStatus,
+    address: raw.address ?? null,
+    createdAt: raw.created_at ?? raw.createdAt ?? null,
+  }
+}
+
+function mapBatchStudent(rawValue: unknown): AdminBatchStudent {
+  const raw = batchStudentSchema.parse(rawValue)
+  const enr = raw.enrollment
+  return {
+    id: String(raw.id ?? ""),
+    fullName: raw.full_name ?? raw.fullName ?? "",
+    email: raw.email ?? "",
+    phone: raw.phone ?? "",
+    enrollmentId: String(raw.enrollment_id ?? raw.enrollmentId ?? enr?.id ?? ""),
+    enrollmentStatus: (raw.enrollment_status ??
+      raw.enrollmentStatus ??
+      enr?.enrollment_status ??
+      enr?.enrollmentStatus ??
+      "PENDING") as AdminEnrollmentStatus,
+    paymentStatus: (raw.payment_status ??
+      raw.paymentStatus ??
+      enr?.payment_status ??
+      enr?.paymentStatus ??
+      "UNPAID") as AdminEnrollmentPaymentStatus,
+    amountPaid: Number(raw.amount_paid ?? raw.amountPaid ?? enr?.amount_paid ?? enr?.amountPaid ?? 0),
+    totalFee: Number(raw.total_fee ?? raw.totalFee ?? enr?.total_fee ?? enr?.totalFee ?? 0),
+    progressPercentage: raw.progress_percentage ?? raw.progressPercentage ?? 0,
+  }
+}
+
+function mapBatchAttendance(rawValue: unknown): AdminBatchAttendance {
+  const raw = batchAttendanceSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    studentId: String(raw.student_id ?? raw.studentId ?? ""),
+    studentName:
+      raw.student_name ??
+      raw.studentName ??
+      raw.student?.full_name ??
+      raw.student?.fullName ??
+      "",
+    classDate: raw.class_date ?? raw.classDate ?? "",
+    classTopic: raw.class_topic ?? raw.classTopic ?? null,
+    status: (raw.status ?? "PRESENT") as AdminAttendanceStatus,
+    notes: raw.notes ?? null,
+  }
+}
+
+function mapAssignment(rawValue: unknown): AdminAssignment {
+  const raw = assignmentSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    courseContentId: String(raw.course_content_id ?? raw.courseContentId ?? ""),
+    title: raw.title ?? "",
+    description: raw.description ?? "",
+    assignmentType: (raw.assignment_type ?? raw.assignmentType ?? "PROJECT") as AdminAssignmentType,
+    maxScore: raw.max_score ?? raw.maxScore ?? 100,
+    dueDate: raw.due_date ?? raw.dueDate ?? null,
+    requiredFiles: raw.required_files ?? raw.requiredFiles ?? [],
+    submissionInstructions: raw.submission_instructions ?? raw.submissionInstructions ?? null,
+  }
+}
+
+function mapSubmission(rawValue: unknown): AdminSubmission {
+  const raw = submissionSchema.parse(rawValue)
+  return {
+    id: String(raw.id ?? ""),
+    assignmentId: String(raw.assignment_id ?? raw.assignmentId ?? ""),
+    assignmentTitle:
+      raw.assignment_title ?? raw.assignmentTitle ?? raw.assignment?.title ?? "",
+    studentId: String(raw.student_id ?? raw.studentId ?? ""),
+    studentName:
+      raw.student_name ??
+      raw.studentName ??
+      raw.student?.full_name ??
+      raw.student?.fullName ??
+      "",
+    filePaths: raw.file_paths ?? raw.filePaths ?? [],
+    githubLink: raw.github_link ?? raw.githubLink ?? null,
+    liveDemoLink: raw.live_demo_link ?? raw.liveDemoLink ?? null,
+    notes: raw.notes ?? null,
+    submittedAt: raw.submitted_at ?? raw.submittedAt ?? null,
+    status: (raw.status ?? "SUBMITTED") as AdminSubmissionStatus,
+    score: raw.score !== null && raw.score !== undefined ? Number(raw.score) : null,
+    feedback: raw.feedback ?? null,
+    gradedBy: raw.graded_by ?? raw.gradedBy ?? null,
+    gradedAt: raw.graded_at ?? raw.gradedAt ?? null,
+  }
+}
+
 function buildExpenseRequestBody(payload: AdminCreateExpensePayload) {
   return {
     expense_date: payload.expenseDate,
@@ -693,6 +928,22 @@ export const adminApi = {
   async getEnrollments(): Promise<AdminEnrollment[]> {
     return fetchMappedList(
       ["/admin/enrollments", "/enrollments", "/students/me/enrollments"],
+      mapEnrollment
+    )
+  },
+
+  async createEnrollment(payload: AdminCreateEnrollmentPayload): Promise<AdminEnrollment> {
+    return executeMappedMutation(
+      () =>
+        apiClient.post("/admin/enrollments", {
+          studentId: payload.studentId,
+          batchId: payload.batchId,
+          courseId: payload.courseId,
+          totalFee: payload.totalFee,
+          paymentStatus: payload.paymentStatus,
+          enrollmentStatus: payload.enrollmentStatus,
+          accessType: payload.accessType,
+        }),
       mapEnrollment
     )
   },
@@ -1006,6 +1257,209 @@ export const adminApi = {
         )
         return mapTestimonial(responsePayload)
       }
+    )
+  },
+
+  // --- Users ---
+
+  async getAllUsers(): Promise<AdminUser[]> {
+    return fetchMappedList(["/admin/users"], mapUser)
+  },
+
+  async getUserById(userId: string): Promise<AdminUser> {
+    try {
+      const data = await getWithFallback([`/admin/users/${userId}`])
+      return mapUser(data)
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async updateUserRole(userId: string, payload: UpdateUserRolePayload): Promise<AdminUser> {
+    return executeMappedMutation(
+      () => apiClient.put(`/admin/users/${userId}/role`, payload),
+      mapUser
+    )
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      await deleteWithFallback([`/admin/users/${userId}`])
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  // --- Courses ---
+
+  async deleteCourse(courseId: string): Promise<void> {
+    try {
+      await deleteWithFallback([`/admin/courses/${courseId}`])
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  // --- Batches (detail) ---
+
+  async getBatchStudents(batchId: string): Promise<AdminBatchStudent[]> {
+    return fetchMappedList(
+      [`/admin/batches/${batchId}/students`, `/ta/batches/${batchId}/students`],
+      mapBatchStudent
+    )
+  },
+
+  async assignTa(batchId: string, payload: AssignTaPayload): Promise<AdminBatch> {
+    return executeMappedMutation(
+      () => apiClient.post(`/admin/batches/${batchId}/assign-ta`, payload),
+      mapBatch
+    )
+  },
+
+  async getBatchAttendance(batchId: string): Promise<AdminBatchAttendance[]> {
+    return fetchMappedList([`/admin/batches/${batchId}/attendance`], mapBatchAttendance)
+  },
+
+  // --- Enrollments ---
+
+  async updateEnrollmentStatus(
+    enrollmentId: string,
+    payload: UpdateEnrollmentStatusPayload
+  ): Promise<AdminEnrollment> {
+    return executeMappedMutation(
+      () => apiClient.put(`/admin/enrollments/${enrollmentId}/status`, payload),
+      mapEnrollment
+    )
+  },
+
+  // --- Assignments ---
+
+  async createAssignment(payload: AdminCreateAssignmentPayload): Promise<AdminAssignment> {
+    return executeMappedMutation(
+      () =>
+        apiClient.post("/admin/assignments", {
+          courseContentId: payload.courseContentId,
+          title: payload.title,
+          assignmentType: payload.assignmentType,
+          description: payload.description,
+          maxScore: payload.maxScore,
+          dueDate: payload.dueDate,
+          requiredFiles: payload.requiredFiles,
+          submissionInstructions: payload.submissionInstructions,
+        }),
+      mapAssignment
+    )
+  },
+
+  // --- Payments (extended) ---
+
+  async getPendingPayments(): Promise<AdminPayment[]> {
+    return fetchMappedList(["/admin/payments/pending"], mapPayment)
+  },
+
+  async sendPaymentReminder(paymentId: string): Promise<void> {
+    try {
+      await postWithFallback([`/admin/payments/${paymentId}/reminder`], {})
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  // --- Analytics ---
+
+  async getRevenueAnalytics(): Promise<AdminAnalyticsRevenue> {
+    try {
+      const data = await getWithFallback(["/admin/analytics/revenue"])
+      const source = data as Record<string, unknown>
+
+      const revenueByPeriod = (
+        (source.revenueByPeriod ?? source.revenue_by_period ?? []) as unknown[]
+      ).map((item) => {
+        const entry = item as Record<string, unknown>
+        return {
+          period: String(entry.period ?? ""),
+          revenue: Number(entry.revenue ?? 0),
+          payments: Number(entry.payments ?? 0),
+        } satisfies AdminRevenueDataPoint
+      })
+
+      const revenueByPaymentMethod = (source.revenueByPaymentMethod ??
+        source.revenue_by_payment_method ??
+        {}) as Record<string, number>
+
+      return {
+        totalRevenue: Number(source.totalRevenue ?? source.total_revenue ?? 0),
+        revenueByPeriod,
+        revenueByPaymentMethod,
+      }
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getStudentAnalytics(): Promise<AdminAnalyticsStudents> {
+    try {
+      const data = await getWithFallback(["/admin/analytics/students"])
+      const source = data as Record<string, unknown>
+
+      const studentsByPeriod = (
+        (source.studentsByPeriod ?? source.students_by_period ?? []) as unknown[]
+      ).map((item) => {
+        const entry = item as Record<string, unknown>
+        return {
+          period: String(entry.period ?? ""),
+          newStudents: Number(entry.newStudents ?? entry.new_students ?? 0),
+          activeStudents: Number(entry.activeStudents ?? entry.active_students ?? 0),
+        } satisfies AdminStudentDataPoint
+      })
+
+      return {
+        totalStudents: Number(source.totalStudents ?? source.total_students ?? 0),
+        activeStudents: Number(source.activeStudents ?? source.active_students ?? 0),
+        inactiveStudents: Number(source.inactiveStudents ?? source.inactive_students ?? 0),
+        studentsByPeriod,
+      }
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  async getCourseAnalytics(): Promise<AdminAnalyticsCourses> {
+    try {
+      const data = await getWithFallback(["/admin/analytics/courses"])
+      const source = data as Record<string, unknown>
+
+      const courses = (
+        (source.courses ?? []) as unknown[]
+      ).map((item) => {
+        const entry = item as Record<string, unknown>
+        return {
+          courseId: String(entry.courseId ?? entry.course_id ?? ""),
+          courseTitle: String(entry.courseTitle ?? entry.course_title ?? ""),
+          enrollments: Number(entry.enrollments ?? 0),
+          revenue: Number(entry.revenue ?? 0),
+          completionRate: Number(entry.completionRate ?? entry.completion_rate ?? 0),
+        } satisfies AdminCourseAnalyticsItem
+      })
+
+      return {
+        totalCourses: Number(source.totalCourses ?? source.total_courses ?? courses.length),
+        courses,
+      }
+    } catch (error) {
+      throw new Error(getHttpErrorMessage(error))
+    }
+  },
+
+  // --- Submissions (admin grading) ---
+
+  async gradeSubmission(
+    submissionId: string,
+    payload: AdminGradeSubmissionPayload
+  ): Promise<AdminSubmission> {
+    return executeMappedMutation(
+      () => apiClient.post(`/admin/submissions/${submissionId}/grade`, payload),
+      mapSubmission
     )
   },
 
