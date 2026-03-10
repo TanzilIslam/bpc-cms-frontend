@@ -86,6 +86,9 @@ export type AdminCreateBatchPayload = {
   maxStudents: number
   status: AdminBatchStatus
   isFree: boolean
+  instructorId?: string
+  taIds?: string[]
+  meetingLink?: string
 }
 
 export type AdminUpdateBatchPayload = Partial<AdminCreateBatchPayload>
@@ -125,13 +128,14 @@ export type AdminCertificate = {
 
 export type AdminGenerateCertificatePayload = {
   enrollmentId: string
+  signatureName?: string
+  signatureTitle?: string
 }
 
 export type AdminFinancialSummary = {
   totalRevenue: number
-  totalExpenses: number
-  netProfit: number
-  pendingPayments: number
+  totalPayments: number
+  outstandingAmount: number
 }
 
 export type AdminExpenseCategory =
@@ -182,12 +186,15 @@ export type AdminCourseDifficulty = "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
 
 export type AdminCreateCoursePayload = {
   title: string
+  slug: string
   description: string
   durationMonths: number
   price: number
   difficultyLevel: AdminCourseDifficulty
   skillsCovered: string[]
   isPublished: boolean
+  thumbnail?: string
+  installmentPlan?: string
 }
 
 export type AdminUpdateCoursePayload = Partial<AdminCreateCoursePayload>

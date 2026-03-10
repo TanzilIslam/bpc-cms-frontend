@@ -32,6 +32,7 @@ import type { Course, CourseDifficulty } from "@/types/course"
 
 type CourseFormState = {
   title: string
+  slug: string
   description: string
   durationMonths: string
   price: string
@@ -42,12 +43,21 @@ type CourseFormState = {
 
 const emptyForm: CourseFormState = {
   title: "",
+  slug: "",
   description: "",
   durationMonths: "2",
   price: "10000",
   difficultyLevel: "BEGINNER",
   skillsCsv: "HTML, CSS, JavaScript",
   isPublished: false,
+}
+
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
 }
 
 type CourseContentFormState = {
@@ -73,6 +83,7 @@ const emptyContentForm: CourseContentFormState = {
 function formFromCourse(course: Course): CourseFormState {
   return {
     title: course.title,
+    slug: course.slug,
     description: course.description,
     durationMonths: String(course.durationMonths || 2),
     price: String(course.price || 0),
@@ -128,7 +139,13 @@ export function AdminCoursesPage() {
   }
 
   function updateForm<K extends keyof CourseFormState>(key: K, value: CourseFormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      if (key === "title" && !editingCourseId) {
+        next.slug = toSlug(value as string)
+      }
+      return next
+    })
   }
 
   function updateContentForm<K extends keyof CourseContentFormState>(
@@ -219,6 +236,7 @@ export function AdminCoursesPage() {
       if (editingCourseId) {
         await updateCourse(editingCourseId, {
           title: form.title.trim(),
+          slug: form.slug.trim(),
           description: form.description.trim(),
           durationMonths,
           price,
@@ -229,6 +247,7 @@ export function AdminCoursesPage() {
       } else {
         await createCourse({
           title: form.title.trim(),
+          slug: form.slug.trim(),
           description: form.description.trim(),
           durationMonths,
           price,
@@ -429,6 +448,15 @@ export function AdminCoursesPage() {
                 id="course-title"
                 value={form.title}
                 onChange={(event) => updateForm("title", event.target.value)}
+              />
+            </AdminFormField>
+
+            <AdminFormField id="course-slug" label="Slug">
+              <Input
+                id="course-slug"
+                value={form.slug}
+                onChange={(event) => updateForm("slug", event.target.value)}
+                placeholder="auto-generated-from-title"
               />
             </AdminFormField>
 

@@ -761,12 +761,15 @@ function buildCourseRequestBody(
 ) {
   return {
     title: payload.title,
+    slug: payload.slug,
     description: payload.description,
     durationMonths: payload.durationMonths,
     price: payload.price,
     difficultyLevel: payload.difficultyLevel,
     skillsCovered: payload.skillsCovered,
     isPublished: payload.isPublished,
+    thumbnail: payload.thumbnail,
+    installmentPlan: payload.installmentPlan,
   }
 }
 
@@ -781,6 +784,9 @@ function buildBatchRequestBody(payload: AdminCreateBatchPayload | AdminUpdateBat
     maxStudents: payload.maxStudents,
     status: payload.status,
     isFree: payload.isFree,
+    instructorId: payload.instructorId,
+    taIds: payload.taIds,
+    meetingLink: payload.meetingLink,
   }
 }
 
@@ -872,7 +878,7 @@ async function executeMappedMutation<T>(
 
 export const adminApi = {
   async getStudents(): Promise<AdminStudent[]> {
-    return fetchMappedList(["/admin/users", "/admin/students"], mapStudent)
+    return fetchMappedList(["/admin/students", "/admin/users"], mapStudent)
   },
 
   async getPayments(): Promise<AdminPayment[]> {
@@ -1127,6 +1133,8 @@ export const adminApi = {
       () =>
         apiClient.post("/admin/certificates/generate", {
           enrollmentId: payload.enrollmentId,
+          signatureName: payload.signatureName,
+          signatureTitle: payload.signatureTitle,
         }),
       mapCertificate
     )
@@ -1468,32 +1476,25 @@ export const adminApi = {
       const payload = await getWithFallback(["/admin/financials"])
       const source = payload as Record<string, unknown>
 
-      const totalRevenue = Number(source.totalRevenue ?? source.total_revenue ?? 0)
-      const totalExpenses = Number(source.totalExpenses ?? source.total_expenses ?? 0)
-      const pendingPayments = Number(source.pendingPayments ?? source.pending_payments ?? 0)
-
       return {
-        totalRevenue,
-        totalExpenses,
-        netProfit: totalRevenue - totalExpenses,
-        pendingPayments,
+        totalRevenue: Number(source.totalRevenue ?? source.total_revenue ?? 0),
+        totalPayments: Number(source.totalPayments ?? source.total_payments ?? 0),
+        outstandingAmount: Number(source.outstandingAmount ?? source.outstanding_amount ?? 0),
       }
     } catch {
-      const [payments, expenses] = await Promise.all([
-        adminApi.getPayments(),
-        adminApi.getExpenses().catch(() => []),
-      ])
+      const payments = await adminApi.getPayments()
       const totalRevenue = payments
         .filter((payment) => payment.status === "CONFIRMED")
         .reduce((sum, payment) => sum + payment.amount, 0)
-      const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-      const pendingPayments = payments.filter((payment) => payment.status === "PENDING").length
+      const totalPayments = payments.length
+      const outstandingAmount = payments
+        .filter((payment) => payment.status === "PENDING")
+        .reduce((sum, payment) => sum + payment.amount, 0)
 
       return {
         totalRevenue,
-        totalExpenses,
-        netProfit: totalRevenue - totalExpenses,
-        pendingPayments,
+        totalPayments,
+        outstandingAmount,
       }
     }
   },

@@ -334,9 +334,8 @@ export function AdminFinancialsPage() {
 
   const metrics = [
     { label: "Total Revenue", value: formatMoney(summary.totalRevenue) },
-    { label: "Total Expenses", value: formatMoney(summary.totalExpenses) },
-    { label: "Net Profit", value: formatMoney(summary.netProfit) },
-    { label: "Pending Payments", value: summary.pendingPayments },
+    { label: "Total Payments", value: formatMoney(summary.totalPayments) },
+    { label: "Outstanding Amount", value: formatMoney(summary.outstandingAmount) },
   ]
 
   return (
