@@ -26,6 +26,11 @@ export const bnTranslations = {
   dashboard: {
     title: "বিপিসি সিএমএস ড্যাশবোর্ড",
     logout: "লগআউট",
+    groups: {
+      management: "ব্যবস্থাপনা",
+      teaching: "শিক্ষাদান",
+      learning: "আমার শিক্ষা",
+    },
   },
   home: {
     label: "ভোলা প্রোগ্রামিং ক্লাব",

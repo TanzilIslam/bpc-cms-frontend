@@ -26,6 +26,11 @@ export const enTranslations = {
   dashboard: {
     title: "BPC CMS Dashboard",
     logout: "Logout",
+    groups: {
+      management: "Management",
+      teaching: "Teaching",
+      learning: "My Learning",
+    },
   },
   home: {
     label: "Bhola Programming Club",

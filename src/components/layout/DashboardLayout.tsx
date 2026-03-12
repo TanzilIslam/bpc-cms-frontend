@@ -14,8 +14,13 @@ type DashboardNavItem = {
   end?: boolean;
 };
 
+type DashboardNavGroup = {
+  titleKey: string;
+  items: DashboardNavItem[];
+};
+
 const studentNav: DashboardNavItem[] = [
-  { label: "Student Overview", to: "/student", end: true },
+  { label: "Overview", to: "/student", end: true },
   { label: "My Courses", to: "/student/courses", end: true },
   { label: "Assignments", to: "/student/assignments", end: true },
   { label: "Progress", to: "/student/progress", end: true },
@@ -24,31 +29,42 @@ const studentNav: DashboardNavItem[] = [
   { label: "Payments", to: "/student/payments", end: true },
 ];
 const taNav: DashboardNavItem[] = [
-  { label: "TA Overview", to: "/ta", end: true },
+  { label: "Overview", to: "/ta", end: true },
   { label: "My Batches", to: "/ta/batches", end: true },
   { label: "Attendance", to: "/ta/attendance", end: true },
   { label: "Student Progress", to: "/ta/progress", end: true },
   { label: "Grading", to: "/ta/grading", end: true },
 ];
 const adminNav: DashboardNavItem[] = [
-  { label: "Admin Overview", to: "/admin", end: true },
+  { label: "Overview", to: "/admin", end: true },
   { label: "Students", to: "/admin/students", end: true },
   { label: "Courses", to: "/admin/courses", end: true },
   { label: "Batches", to: "/admin/batches", end: true },
   { label: "Payments", to: "/admin/payments", end: true },
 ];
 
-const navByRole: Record<UserRole, DashboardNavItem[]> = {
-  SUPER_ADMIN: [...adminNav, ...taNav, ...studentNav],
-  ADMIN: [...adminNav, ...taNav, ...studentNav],
-  TA: [...taNav, ...studentNav],
-  STUDENT: studentNav,
-  ALUMNI: studentNav,
+const navByRole: Record<UserRole, DashboardNavGroup[]> = {
+  SUPER_ADMIN: [
+    { titleKey: "dashboard.groups.management", items: adminNav },
+    { titleKey: "dashboard.groups.teaching", items: taNav },
+    { titleKey: "dashboard.groups.learning", items: studentNav },
+  ],
+  ADMIN: [
+    { titleKey: "dashboard.groups.management", items: adminNav },
+    { titleKey: "dashboard.groups.teaching", items: taNav },
+    { titleKey: "dashboard.groups.learning", items: studentNav },
+  ],
+  TA: [
+    { titleKey: "dashboard.groups.teaching", items: taNav },
+    { titleKey: "dashboard.groups.learning", items: studentNav },
+  ],
+  STUDENT: [{ titleKey: "dashboard.groups.learning", items: studentNav }],
+  ALUMNI: [{ titleKey: "dashboard.groups.learning", items: studentNav }],
   GUEST: [],
 };
 function navLinkClassName(isActive: boolean): string {
   return cn(
-    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
     isActive
       ? "bg-primary text-primary-foreground"
       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -59,7 +75,7 @@ export function DashboardLayout() {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
 
-  const navItems = user ? navByRole[user.role] : [];
+  const groups = user ? navByRole[user.role] : [];
 
   return (
     <div className="min-h-screen bg-muted/25">
@@ -82,17 +98,26 @@ export function DashboardLayout() {
         </div>
       </header>
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 md:grid-cols-[240px_1fr]">
-        <aside className="rounded-lg border bg-background p-3">
-          <nav className="grid gap-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => navLinkClassName(isActive)}
-              >
-                {item.label}
-              </NavLink>
+        <aside className="rounded-lg border bg-background p-4">
+          <nav className="grid gap-6">
+            {groups.map((group) => (
+              <div key={group.titleKey} className="grid gap-2">
+                <p className="px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+                  {t(group.titleKey)}
+                </p>
+                <div className="grid gap-1">
+                  {group.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) => navLinkClassName(isActive)}
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </aside>
