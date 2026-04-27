@@ -13,5 +13,9 @@ export function getDefaultRouteForRole(role: UserRole): string {
     return "/ta"
   }
 
-  return "/student"
+  if (role === "STUDENT") {
+    return "/student"
+  }
+
+  return "/unauthorized"
 }

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/useAuth"
 import { getDefaultRouteForRole } from "@/lib/permissions"
+import { getFirstValidationError, registerFormSchema } from "@/lib/validation/auth"
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -29,18 +30,27 @@ export function RegisterPage() {
     event.preventDefault()
     setError(null)
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.")
+    const parsed = registerFormSchema.safeParse({
+      fullName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      address,
+    })
+
+    if (!parsed.success) {
+      setError(getFirstValidationError(parsed.error))
       return
     }
 
     try {
       await register({
-        fullName,
-        email,
-        phone,
-        password,
-        address: address || undefined,
+        fullName: parsed.data.fullName,
+        email: parsed.data.email,
+        phone: parsed.data.phone,
+        password: parsed.data.password,
+        address: parsed.data.address,
       })
     } catch {
       setError("Registration failed. Please check your data and try again.")
