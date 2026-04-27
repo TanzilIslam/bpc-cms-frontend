@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { RouterProvider } from "react-router-dom"
 
+import { Toaster } from "@/components/ui/sonner"
 import { useAuth } from "@/hooks/useAuth"
 import { router } from "@/routes"
 
@@ -12,7 +13,10 @@ function App() {
   }, [initialize])
 
   return (
-    <RouterProvider router={router} />
+    <>
+      <RouterProvider router={router} />
+      <Toaster richColors closeButton />
+    </>
   )
 }
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { toast } from "sonner"
 
 import {
   InlineErrorMessage,
@@ -39,6 +40,7 @@ import {
   type PaymentFilterOption,
 } from "@/lib/admin-options"
 import { paymentStatusBadgeVariant } from "@/lib/admin-badges"
+import { withFallbackMessage } from "@/lib/feedback"
 import { formatDate, formatMoney } from "@/lib/formatters"
 import type { AdminPaymentMethod, AdminPaymentStatus } from "@/types/admin"
 
@@ -139,10 +141,14 @@ export function AdminPaymentsPage() {
         transactionId: form.transactionId.trim() || undefined,
         notes: form.notes.trim() || undefined,
       })
+      toast.success("Payment recorded successfully.")
       setDialogOpen(false)
     } catch (requestError) {
-      const message =
-        requestError instanceof Error ? requestError.message : "Failed to record payment."
+      const message = withFallbackMessage(
+        requestError instanceof Error ? requestError.message : null,
+        "Failed to record payment."
+      )
+      toast.error(message)
       setFormError(message)
     }
   }

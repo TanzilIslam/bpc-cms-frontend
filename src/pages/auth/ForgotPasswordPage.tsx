@@ -5,6 +5,7 @@ import { authApi } from "@/api/auth.api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { forgotPasswordFormSchema, getFirstValidationError } from "@/lib/validation/auth"
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -16,10 +17,17 @@ export function ForgotPasswordPage() {
     event.preventDefault()
     setError(null)
     setSuccessMessage(null)
+
+    const parsed = forgotPasswordFormSchema.safeParse({ email })
+    if (!parsed.success) {
+      setError(getFirstValidationError(parsed.error))
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      const result = await authApi.forgotPassword({ email })
+      const result = await authApi.forgotPassword({ email: parsed.data.email })
       setSuccessMessage(result.message)
     } catch {
       setError("Could not send reset request. Try again.")
