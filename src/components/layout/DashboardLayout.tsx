@@ -47,19 +47,14 @@ const navByRole: Record<UserRole, DashboardNavGroup[]> = {
   SUPER_ADMIN: [
     { titleKey: "dashboard.groups.management", items: adminNav },
     { titleKey: "dashboard.groups.teaching", items: taNav },
-    { titleKey: "dashboard.groups.learning", items: studentNav },
   ],
   ADMIN: [
     { titleKey: "dashboard.groups.management", items: adminNav },
     { titleKey: "dashboard.groups.teaching", items: taNav },
-    { titleKey: "dashboard.groups.learning", items: studentNav },
   ],
-  TA: [
-    { titleKey: "dashboard.groups.teaching", items: taNav },
-    { titleKey: "dashboard.groups.learning", items: studentNav },
-  ],
+  TA: [{ titleKey: "dashboard.groups.teaching", items: taNav }],
   STUDENT: [{ titleKey: "dashboard.groups.learning", items: studentNav }],
-  ALUMNI: [{ titleKey: "dashboard.groups.learning", items: studentNav }],
+  ALUMNI: [],
   GUEST: [],
 };
 function navLinkClassName(isActive: boolean): string {

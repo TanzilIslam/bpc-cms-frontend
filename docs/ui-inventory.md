@@ -168,3 +168,14 @@
 - ✅ Global `<Toaster />` mounted at app root (`src/App.tsx`).
 - ✅ Shared fallback message helper added (`src/lib/feedback.ts`).
 - ✅ First mutation page wired to toast contract: `AdminPaymentsPage` now shows success + backend/fallback error toast while preserving inline form error context.
+
+---
+
+## Role / permission enforcement update
+
+- ✅ Tightened route-level role access so each dashboard area now maps to intended users only:
+  - `/student` => `STUDENT`
+  - `/ta` => `TA`, `ADMIN`, `SUPER_ADMIN`
+  - `/admin` => `ADMIN`, `SUPER_ADMIN`
+- ✅ Updated dashboard nav grouping to reflect role capabilities from backend contracts (`ADMIN`/`SUPER_ADMIN` also see TA workspace links).
+- ✅ Updated default route fallback to send unsupported dashboard roles (e.g., `ALUMNI`, `GUEST`) to `/unauthorized`.

@@ -226,9 +226,7 @@ export const router = createBrowserRouter([
     path: "/student",
     element: (
       <ProtectedRoute>
-        <RoleRoute
-          allowedRoles={["STUDENT", "ALUMNI", "TA", "ADMIN", "SUPER_ADMIN"]}
-        >
+        <RoleRoute allowedRoles={["STUDENT"]}>
           <DashboardLayout />
         </RoleRoute>
       </ProtectedRoute>
