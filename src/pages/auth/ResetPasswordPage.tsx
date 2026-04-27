@@ -5,6 +5,7 @@ import { authApi } from "@/api/auth.api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getFirstValidationError, resetPasswordFormSchema } from "@/lib/validation/auth"
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -22,20 +23,23 @@ export function ResetPasswordPage() {
     setError(null)
     setSuccessMessage(null)
 
-    if (!token) {
-      setError("Reset token is missing from URL.")
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.")
+    const parsed = resetPasswordFormSchema.safeParse({
+      token,
+      password,
+      confirmPassword,
+    })
+    if (!parsed.success) {
+      setError(getFirstValidationError(parsed.error))
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const result = await authApi.resetPassword({ token, newPassword: password })
+      const result = await authApi.resetPassword({
+        token: parsed.data.token,
+        newPassword: parsed.data.password,
+      })
       setSuccessMessage(result.message)
       navigate("/auth/login", { replace: true })
     } catch {
