@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const REQUIRED_NODE_MAJOR = 24
-const REQUIRED_NPM = "11.6.2"
+const REQUIRED_NODE_MAJOR = 22
+const REQUIRED_NPM = "11.4.2"
 
 function fail(message) {
   console.error(`\nRuntime requirement failed: ${message}`)
