@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/useAuth"
+import { getFirstValidationError, loginFormSchema } from "@/lib/validation/auth"
 import { getDefaultRouteForRole } from "@/lib/permissions"
 
 export function LoginPage() {
@@ -25,8 +26,14 @@ export function LoginPage() {
     event.preventDefault()
     setError(null)
 
+    const parsed = loginFormSchema.safeParse({ email, password })
+    if (!parsed.success) {
+      setError(getFirstValidationError(parsed.error))
+      return
+    }
+
     try {
-      await login(email, password)
+      await login(parsed.data.email, parsed.data.password)
     } catch {
       setError("Login failed. Check your credentials and try again.")
     }
